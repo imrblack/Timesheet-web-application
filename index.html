@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TimeSheet Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --surface: #ffffff;
+    --surface2: #f0f0f2;
+    --border: #e2e2e6;
+    --text: #1a1a2e;
+    --text2: #6b6b80;
+    --text3: #9999aa;
+    --accent: #2563eb;
+    --accent-light: #dbeafe;
+    --accent-dark: #1d4ed8;
+    --danger: #ef4444;
+    --danger-light: #fee2e2;
+    --success: #22c55e;
+    --success-light: #dcfce7;
+    --warning: #f59e0b;
+    --warning-light: #fef3c7;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow: 0 4px 16px rgba(0,0,0,0.08), 0 2px 6px rgba(0,0,0,0.04);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-xs: 6px;
+    --nav-h: 72px;
+    --top-h: 64px;
+    --transition: 0.2s cubic-bezier(0.4,0,0.2,1);
+  }
+  .dark {
+    --bg: #0f0f14;
+    --surface: #1a1a24;
+    --surface2: #22222e;
+    --border: #2e2e3e;
+    --text: #f0f0f8;
+    --text2: #9090a8;
+    --text3: #55556a;
+    --accent-light: #1e3a6e;
+    --danger-light: #3d1515;
+    --success-light: #0f2e1a;
+    --warning-light: #2e1e0a;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+    --shadow: 0 4px 16px rgba(0,0,0,0.4);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    transition: background var(--transition), color var(--transition);
+    overscroll-behavior: none;
+  }
+
+  /* ─── REGISTRATION ─── */
+  #regScreen {
+    position: fixed; inset: 0; z-index: 1000;
+    background: var(--bg);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .reg-card {
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 40px 32px;
+    width: 100%; max-width: 400px;
+    box-shadow: var(--shadow-lg);
+    animation: slideUp 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .reg-logo {
+    width: 56px; height: 56px;
+    background: var(--accent);
+    border-radius: 16px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px;
+    font-size: 24px;
+  }
+  .reg-title { font-size: 26px; font-weight: 700; margin-bottom: 6px; }
+  .reg-sub { color: var(--text2); font-size: 14px; margin-bottom: 28px; }
+
+  /* ─── INPUTS ─── */
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .field input, .field select, .field textarea {
+    width: 100%; padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color var(--transition), box-shadow var(--transition);
+    -webkit-appearance: none;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-light);
+  }
+  .field textarea { resize: none; height: 80px; }
+  .field input[type="time"] { font-family: 'DM Mono', monospace; }
+
+  /* ─── BUTTONS ─── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px 20px;
+    border: none; border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px; font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+    white-space: nowrap;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: var(--accent); color: #fff; width: 100%; }
+  .btn-primary:hover { background: var(--accent-dark); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-ghost { background: var(--surface2); color: var(--text); }
+  .btn-ghost:hover { background: var(--border); }
+  .btn-sm { padding: 7px 12px; font-size: 13px; border-radius: var(--radius-xs); }
+  .btn-icon { width: 36px; height: 36px; padding: 0; border-radius: 50%; }
+
+  /* ─── APP SHELL ─── */
+  #app { display: none; height: 100vh; flex-direction: column; overflow: hidden; }
+  #app.visible { display: flex; }
+
+  /* ─── TOP BAR ─── */
+  .topbar {
+    height: var(--top-h);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 20px;
+    gap: 12px;
+    flex-shrink: 0;
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-title { flex: 1; font-size: 18px; font-weight: 700; }
+  .topbar-date { font-size: 12px; color: var(--text2); font-weight: 500; }
+  .dark-toggle {
+    width: 38px; height: 38px; border-radius: 50%;
+    background: var(--surface2); border: none;
+    cursor: pointer; font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background var(--transition);
+  }
+  .dark-toggle:hover { background: var(--border); }
+
+  /* ─── PAGES ─── */
+  .pages { flex: 1; overflow: hidden; position: relative; }
+  .page {
+    position: absolute; inset: 0;
+    overflow-y: auto;
+    padding: 20px 16px calc(var(--nav-h) + 16px);
+    opacity: 0; pointer-events: none;
+    transform: translateY(8px);
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .page.active { opacity: 1; pointer-events: all; transform: translateY(0); }
+
+  /* ─── BOTTOM NAV ─── */
+  .bottomnav {
+    height: var(--nav-h);
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-shrink: 0;
+    position: sticky; bottom: 0;
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 4px; cursor: pointer; border: none;
+    background: none; color: var(--text3);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px; font-weight: 500;
+    transition: color var(--transition);
+    padding-bottom: 6px;
+  }
+  .nav-item.active { color: var(--accent); }
+  .nav-icon { font-size: 22px; transition: transform var(--transition); }
+  .nav-item.active .nav-icon { transform: scale(1.1); }
+
+  /* ─── SEARCH ─── */
+  .search-wrap {
+    position: relative; margin-bottom: 16px;
+  }
+  .search-wrap input {
+    width: 100%; padding: 11px 14px 11px 40px;
+    border: 1.5px solid var(--border);
+    border-radius: 50px;
+    background: var(--surface);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; outline: none;
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+  .search-wrap input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-light); }
+  .search-icon {
+    position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+    font-size: 16px; color: var(--text3); pointer-events: none;
+  }
+
+  /* ─── CARDS ─── */
+  .entry-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    transition: box-shadow var(--transition), transform var(--transition);
+    animation: cardIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .entry-card:hover { box-shadow: var(--shadow); }
+  .entry-card:active { transform: scale(0.99); }
+  .card-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+  .vehicle-badge {
+    background: var(--accent-light);
+    color: var(--accent);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px; font-weight: 500;
+    padding: 6px 10px;
+    border-radius: var(--radius-xs);
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .card-meta { flex: 1; }
+  .card-model { font-size: 15px; font-weight: 600; }
+  .card-date { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .card-times {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .time-chip {
+    display: flex; align-items: center; gap: 5px;
+    background: var(--surface2);
+    border-radius: 50px; padding: 5px 10px;
+    font-size: 13px; font-family: 'DM Mono', monospace; color: var(--text2);
+  }
+  .time-chip span { font-size: 11px; }
+  .hours-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--success-light);
+    color: var(--success);
+    font-size: 12px; font-weight: 600;
+    padding: 4px 10px; border-radius: 50px;
+  }
+  .card-remarks { font-size: 13px; color: var(--text2); margin-top: 8px; font-style: italic; }
+  .card-actions { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+
+  /* ─── ADD FORM ─── */
+  .form-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+  }
+  .form-title { font-size: 16px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 360px) { .form-row { grid-template-columns: 1fr; } }
+
+  /* ─── EMPTY STATE ─── */
+  .empty {
+    text-align: center; padding: 48px 24px;
+    color: var(--text3);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty h3 { font-size: 16px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+  .empty p { font-size: 14px; }
+
+  /* ─── SECTION HEADER ─── */
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .section-label { font-size: 13px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* ─── REPORT PAGE ─── */
+  .report-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+  .report-option {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: opacity var(--transition);
+  }
+  .report-option:last-child { border-bottom: none; padding-bottom: 0; }
+  .report-option:first-child { padding-top: 0; }
+  .report-option:active { opacity: 0.7; }
+  .report-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .report-icon.day { background: #dbeafe; }
+  .report-icon.week { background: #dcfce7; }
+  .report-icon.month { background: #fef3c7; }
+  .dark .report-icon.day { background: #1e3a6e; }
+  .dark .report-icon.week { background: #0f2e1a; }
+  .dark .report-icon.month { background: #2e1e0a; }
+  .report-info { flex: 1; }
+  .report-info strong { font-size: 15px; font-weight: 600; display: block; }
+  .report-info span { font-size: 12px; color: var(--text2); }
+  .report-arrow { color: var(--text3); font-size: 18px; }
+
+  /* ─── STAT CARD ─── */
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .stat-card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 18px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-sm);
+  }
+  .stat-value { font-size: 28px; font-weight: 700; color: var(--accent); font-family: 'DM Mono', monospace; }
+  .stat-label { font-size: 12px; color: var(--text2); font-weight: 500; margin-top: 4px; }
+
+  /* ─── PROFILE ─── */
+  .profile-hero {
+    background: var(--accent);
+    border-radius: var(--radius);
+    padding: 28px 24px;
+    margin-bottom: 16px;
+    text-align: center;
+    color: #fff;
+  }
+  .avatar {
+    width: 72px; height: 72px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 32px; margin: 0 auto 14px;
+    font-weight: 700;
+  }
+  .profile-name { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .profile-id { font-size: 13px; opacity: 0.8; font-family: 'DM Mono', monospace; }
+
+  /* ─── MODAL ─── */
+  .modal-backdrop {
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: flex-end; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .modal-backdrop.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface);
+    border-radius: 24px 24px 0 0;
+    padding: 28px 24px 36px;
+    width: 100%; max-width: 480px;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .modal-backdrop.open .modal { transform: translateY(0); }
+  .modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 20px; }
+  .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+  .modal-sub { font-size: 14px; color: var(--text2); margin-bottom: 24px; }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btns .btn { flex: 1; }
+
+  /* ─── TOAST ─── */
+  #toast {
+    position: fixed; bottom: calc(var(--nav-h) + 16px); left: 50%; z-index: 1000;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--text); color: var(--bg);
+    padding: 12px 20px; border-radius: 50px;
+    font-size: 14px; font-weight: 500;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.2s, transform 0.2s;
+    white-space: nowrap; max-width: 90vw;
+    display: flex; align-items: center; gap: 8px;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ─── ANIMATIONS ─── */
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px) scale(0.97); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  /* ─── DIVIDER ─── */
+  .divider { height: 1px; background: var(--border); margin: 16px 0; }
+
+  /* ─── CHIPS ─── */
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 50px;
+    font-size: 12px; font-weight: 500;
+  }
+
+  /* MISC */
+  .text-center { text-align: center; }
+  .mt-8 { margin-top: 8px; }
+  .mt-16 { margin-top: 16px; }
+  .fw-600 { font-weight: 600; }
+  .color-danger { color: var(--danger); }
+</style>
+</head>
+<body>
+
+<!-- REGISTRATION -->
+<div id="regScreen">
+  <div class="reg-card">
+    <div class="reg-logo">👤</div>
+    <div class="reg-title">Welcome!</div>
+    <div class="reg-sub">Enter your details to get started with TimeSheet Pro.</div>
+    <div class="field">
+      <label>Employee Name</label>
+      <input type="text" id="regName" placeholder="e.g. Ravi Kumar" autocomplete="off">
+    </div>
+    <div class="field">
+      <label>Employee ID</label>
+      <input type="text" id="regId" placeholder="e.g. EMP-001" autocomplete="off">
+    </div>
+    <button class="btn btn-primary" onclick="registerEmployee()">Get Started →</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="topTitle">🚗 Vehicles</div>
+      <div class="topbar-date" id="topDate"></div>
+    </div>
+    <div style="flex:1"></div>
+    <button class="dark-toggle" onclick="toggleDark()" id="darkBtn">🌙</button>
+  </div>
+
+  <!-- PAGES -->
+  <div class="pages">
+
+    <!-- ── VEHICLES PAGE ── -->
+    <div class="page active" id="pageVehicles">
+      <!-- Add Form -->
+      <div class="form-card">
+        <div class="form-title">
+          <span id="formIcon">➕</span>
+          <span id="formTitle">Add Entry</span>
+        </div>
+        <div class="field">
+          <label>Vehicle Number</label>
+          <input type="text" id="inVehicle" placeholder="e.g. TN01AB1234" autocomplete="off" oninput="this.value=this.value.toUpperCase()">
+        </div>
+        <div class="field">
+          <label>Model</label>
+          <input type="text" id="inModel" placeholder="e.g. Toyota Innova" autocomplete="off">
+        </div>
+        <div class="form-row">
+          <div class="field">
+            <label>Start Time</label>
+            <input type="time" id="inStart">
+          </div>
+          <div class="field">
+            <label>End Time</label>
+            <input type="time" id="inEnd">
+          </div>
+        </div>
+        <div class="field">
+          <label>Remarks</label>
+          <textarea id="inRemarks" placeholder="Optional notes..."></textarea>
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-primary" id="saveBtn" onclick="saveEntry()">
+            <span>✓</span> <span id="saveBtnText">Add Entry</span>
+          </button>
+          <button class="btn btn-ghost" id="cancelEditBtn" onclick="cancelEdit()" style="display:none">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search vehicle number..." oninput="renderEntries()">
+      </div>
+
+      <!-- Entries -->
+      <div class="section-header">
+        <span class="section-label" id="entriesLabel">Today's Entries</span>
+        <span class="section-label" id="entriesCount" style="color:var(--accent)"></span>
+      </div>
+      <div id="entriesList"></div>
+    </div>
+
+    <!-- ── REPORTS PAGE ── -->
+    <div class="page" id="pageReports">
+      <div style="margin-bottom:20px">
+        <div class="reg-title" style="font-size:22px">📊 Reports</div>
+        <div style="font-size:14px;color:var(--text2);margin-top:4px">Export your timesheet data to Excel</div>
+      </div>
+
+      <div class="report-card">
+        <div class="report-option" onclick="downloadReport('day')">
+          <div class="report-icon day">📅</div>
+          <div class="report-info">
+            <strong>Day Report</strong>
+            <span>Today's entries only</span>
+          </div>
+          <span class="report-arrow">›</span>
+        </div>
+        <div class="report-option" onclick="downloadReport('week')">
+          <div class="report-icon week">📆</div>
+          <div class="report-info">
+            <strong>Week Report</strong>
+            <span>Current week's entries</span>
+          </div>
+          <span class="report-arrow">›</span>
+        </div>
+        <div class="report-option" onclick="downloadReport('month')">
+          <div class="report-icon month">🗓️</div>
+          <div class="report-info">
+            <strong>Month Report</strong>
+            <span>This month's entries</span>
+          </div>
+          <span class="report-arrow">›</span>
+        </div>
+      </div>
+
+      <div class="report-card mt-16">
+        <div style="font-size:14px;font-weight:600;margin-bottom:12px">📈 Quick Stats</div>
+        <div id="reportStats"></div>
+      </div>
+    </div>
+
+    <!-- ── PROFILE PAGE ── -->
+    <div class="page" id="pageProfile">
+      <div class="profile-hero" id="profileHero">
+        <div class="avatar" id="profileAvatar">?</div>
+        <div class="profile-name" id="profileName">—</div>
+        <div class="profile-id" id="profileIdEl">—</div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="statVehicles">0</div>
+          <div class="stat-label">Total Entries</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statHours">0h</div>
+          <div class="stat-label">Total Hours</div>
+        </div>
+      </div>
+
+      <div class="report-card">
+        <div style="font-size:14px;font-weight:600;margin-bottom:4px">Account</div>
+        <div class="divider"></div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:14px;color:var(--text2)">Employee Name</span>
+            <span style="font-size:14px;font-weight:600" id="pName">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:14px;color:var(--text2)">Employee ID</span>
+            <span style="font-size:14px;font-weight:600;font-family:'DM Mono',monospace" id="pId">—</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <span style="font-size:14px;color:var(--text2)">Dark Mode</span>
+            <button class="btn btn-ghost btn-sm" onclick="toggleDark()" id="dmBtn">🌙 Enable</button>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn btn-danger mt-16" style="width:100%" onclick="confirmReset()">🗑️ Reset App</button>
+      <div style="text-align:center;margin-top:20px;font-size:12px;color:var(--text3)">TimeSheet Pro v1.0 · Built with ❤️</div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottomnav">
+    <button class="nav-item active" data-page="pageVehicles" onclick="switchPage(this,'pageVehicles','🚗 Vehicles')">
+      <span class="nav-icon">🚗</span>
+      <span>Vehicles</span>
+    </button>
+    <button class="nav-item" data-page="pageReports" onclick="switchPage(this,'pageReports','📊 Reports')">
+      <span class="nav-icon">📊</span>
+      <span>Reports</span>
+    </button>
+    <button class="nav-item" data-page="pageProfile" onclick="switchPage(this,'pageProfile','👤 Profile')">
+      <span class="nav-icon">👤</span>
+      <span>Profile</span>
+    </button>
+  </nav>
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-backdrop" id="deleteModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="font-size:36px;text-align:center;margin-bottom:12px">🗑️</div>
+    <div class="modal-title text-center">Delete Entry?</div>
+    <div class="modal-sub text-center">This action cannot be undone. The entry will be permanently removed.</div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('deleteModal')">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESET MODAL -->
+<div class="modal-backdrop" id="resetModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div style="font-size:36px;text-align:center;margin-bottom:12px">⚠️</div>
+    <div class="modal-title text-center">Reset App?</div>
+    <div class="modal-sub text-center">All data including entries and your profile will be permanently deleted.</div>
+    <div class="modal-btns">
+      <button class="btn btn-ghost" onclick="closeModal('resetModal')">Cancel</button>
+      <button class="btn btn-danger" onclick="doReset()">Reset Everything</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════
+let entries = JSON.parse(localStorage.getItem('ts_entries') || '[]');
+let employee = JSON.parse(localStorage.getItem('ts_employee') || 'null');
+let darkMode = localStorage.getItem('ts_dark') === '1';
+let editingId = null;
+let deletingId = null;
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+function init() {
+  if (darkMode) document.body.classList.add('dark');
+  updateDarkBtn();
+
+  const now = new Date();
+  const opts = { weekday:'long', year:'numeric', month:'long', day:'numeric' };
+  document.getElementById('topDate').textContent = now.toLocaleDateString('en-IN', opts);
+
+  if (employee) {
+    document.getElementById('regScreen').style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+    loadProfile();
+    renderEntries();
+    renderReportStats();
+  }
+}
+
+// ═══════════════════════════════════════════════
+// REGISTRATION
+// ═══════════════════════════════════════════════
+function registerEmployee() {
+  const name = document.getElementById('regName').value.trim();
+  const id = document.getElementById('regId').value.trim();
+  if (!name || !id) { showToast('⚠️ Please fill both fields'); return; }
+  employee = { name, id };
+  localStorage.setItem('ts_employee', JSON.stringify(employee));
+  document.getElementById('regScreen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+  loadProfile();
+  renderEntries();
+  renderReportStats();
+  showToast('✅ Welcome, ' + name + '!');
+}
+
+// ═══════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════
+function switchPage(btn, pageId, title) {
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(pageId).classList.add('active');
+  document.getElementById('topTitle').textContent = title;
+  if (pageId === 'pageProfile') { loadProfile(); }
+  if (pageId === 'pageReports') { renderReportStats(); }
+}
+
+// ═══════════════════════════════════════════════
+// ENTRIES
+// ═══════════════════════════════════════════════
+function saveEntry() {
+  const vehicle = document.getElementById('inVehicle').value.trim().toUpperCase();
+  const model = document.getElementById('inModel').value.trim();
+  const start = document.getElementById('inStart').value;
+  const end = document.getElementById('inEnd').value;
+  const remarks = document.getElementById('inRemarks').value.trim();
+
+  if (!vehicle || !model || !start || !end) {
+    showToast('⚠️ Fill Vehicle, Model, Start & End Time');
+    return;
+  }
+
+  const hours = calcHours(start, end);
+
+  if (editingId) {
+    const idx = entries.findIndex(e => e.id === editingId);
+    if (idx !== -1) {
+      entries[idx] = { ...entries[idx], vehicle, model, start, end, remarks, hours };
+      saveEntries();
+      renderEntries();
+      cancelEdit();
+      showToast('✏️ Entry updated!');
+    }
+  } else {
+    const entry = {
+      id: Date.now().toString(),
+      date: todayStr(),
+      vehicle, model, start, end, remarks, hours
+    };
+    entries.unshift(entry);
+    saveEntries();
+    clearForm();
+    renderEntries();
+    renderReportStats();
+    showToast('✅ Entry saved!');
+  }
+}
+
+function calcHours(start, end) {
+  if (!start || !end) return '—';
+  const [sh, sm] = start.split(':').map(Number);
+  const [eh, em] = end.split(':').map(Number);
+  let mins = (eh * 60 + em) - (sh * 60 + sm);
+  if (mins < 0) mins += 1440;
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return h + 'h ' + (m > 0 ? m + 'm' : '');
+}
+
+function todayStr() {
+  const d = new Date();
+  return d.toISOString().slice(0, 10);
+}
+
+function saveEntries() {
+  localStorage.setItem('ts_entries', JSON.stringify(entries));
+}
+
+function clearForm() {
+  document.getElementById('inVehicle').value = '';
+  document.getElementById('inModel').value = '';
+  document.getElementById('inStart').value = '';
+  document.getElementById('inEnd').value = '';
+  document.getElementById('inRemarks').value = '';
+}
+
+function renderEntries() {
+  const search = document.getElementById('searchInput').value.trim().toUpperCase();
+  let list = [...entries];
+  if (search) list = list.filter(e => e.vehicle.includes(search));
+
+  const el = document.getElementById('entriesList');
+  document.getElementById('entriesCount').textContent = list.length + ' entries';
+  document.getElementById('entriesLabel').textContent = search ? 'Search Results' : 'All Entries';
+
+  if (!list.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">${search ? '🔍' : '🚗'}</div><h3>${search ? 'No results found' : 'No entries yet'}</h3><p>${search ? 'Try a different vehicle number.' : 'Add your first entry above!'}</p></div>`;
+    return;
+  }
+
+  el.innerHTML = list.map(e => `
+    <div class="entry-card" id="card-${e.id}">
+      <div class="card-header">
+        <div class="vehicle-badge">${e.vehicle}</div>
+        <div class="card-meta">
+          <div class="card-model">${e.model}</div>
+          <div class="card-date">${formatDate(e.date)}</div>
+        </div>
+      </div>
+      <div class="card-times">
+        <div class="time-chip"><span>▶</span> ${e.start}</div>
+        <div class="time-chip"><span>■</span> ${e.end}</div>
+        <div class="hours-badge">⏱ ${e.hours}</div>
+      </div>
+      ${e.remarks ? `<div class="card-remarks">"${e.remarks}"</div>` : ''}
+      <div class="card-actions">
+        <button class="btn btn-ghost btn-sm" onclick="editEntry('${e.id}')">✏️ Edit</button>
+        <button class="btn btn-sm" style="background:var(--danger-light);color:var(--danger)" onclick="askDelete('${e.id}')">🗑️ Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function formatDate(str) {
+  if (!str) return '';
+  const d = new Date(str + 'T00:00:00');
+  return d.toLocaleDateString('en-IN', { weekday:'short', day:'numeric', month:'short', year:'numeric' });
+}
+
+// ═══════════════════════════════════════════════
+// EDIT
+// ═══════════════════════════════════════════════
+function editEntry(id) {
+  const e = entries.find(x => x.id === id);
+  if (!e) return;
+  editingId = id;
+  document.getElementById('inVehicle').value = e.vehicle;
+  document.getElementById('inModel').value = e.model;
+  document.getElementById('inStart').value = e.start;
+  document.getElementById('inEnd').value = e.end;
+  document.getElementById('inRemarks').value = e.remarks || '';
+  document.getElementById('formTitle').textContent = 'Edit Entry';
+  document.getElementById('formIcon').textContent = '✏️';
+  document.getElementById('saveBtnText').textContent = 'Update Entry';
+  document.getElementById('cancelEditBtn').style.display = 'flex';
+  document.getElementById('pageVehicles').scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelEdit() {
+  editingId = null;
+  clearForm();
+  document.getElementById('formTitle').textContent = 'Add Entry';
+  document.getElementById('formIcon').textContent = '➕';
+  document.getElementById('saveBtnText').textContent = 'Add Entry';
+  document.getElementById('cancelEditBtn').style.display = 'none';
+}
+
+// ═══════════════════════════════════════════════
+// DELETE
+// ═══════════════════════════════════════════════
+function askDelete(id) {
+  deletingId = id;
+  openModal('deleteModal');
+}
+
+function confirmDelete() {
+  entries = entries.filter(e => e.id !== deletingId);
+  saveEntries();
+  renderEntries();
+  renderReportStats();
+  closeModal('deleteModal');
+  showToast('🗑️ Entry deleted');
+  deletingId = null;
+}
+
+// ═══════════════════════════════════════════════
+// PROFILE
+// ═══════════════════════════════════════════════
+function loadProfile() {
+  if (!employee) return;
+  const initials = employee.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  document.getElementById('profileAvatar').textContent = initials;
+  document.getElementById('profileName').textContent = employee.name;
+  document.getElementById('profileIdEl').textContent = employee.id;
+  document.getElementById('pName').textContent = employee.name;
+  document.getElementById('pId').textContent = employee.id;
+
+  const totalH = totalHoursNum();
+  document.getElementById('statVehicles').textContent = entries.length;
+  document.getElementById('statHours').textContent = totalH.toFixed(1) + 'h';
+
+  document.getElementById('dmBtn').textContent = darkMode ? '☀️ Disable' : '🌙 Enable';
+}
+
+function totalHoursNum() {
+  return entries.reduce((acc, e) => {
+    if (!e.start || !e.end) return acc;
+    const [sh, sm] = e.start.split(':').map(Number);
+    const [eh, em] = e.end.split(':').map(Number);
+    let m = (eh * 60 + em) - (sh * 60 + sm);
+    if (m < 0) m += 1440;
+    return acc + m / 60;
+  }, 0);
+}
+
+// ═══════════════════════════════════════════════
+// REPORT STATS
+// ═══════════════════════════════════════════════
+function renderReportStats() {
+  const today = todayStr();
+  const todayE = entries.filter(e => e.date === today);
+  const el = document.getElementById('reportStats');
+  if (!el) return;
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span style="font-size:13px;color:var(--text2)">Today's entries</span>
+      <span style="font-weight:700;color:var(--accent)">${todayE.length}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <span style="font-size:13px;color:var(--text2)">Total entries</span>
+      <span style="font-weight:700">${entries.length}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:13px;color:var(--text2)">Total hours worked</span>
+      <span style="font-weight:700;color:var(--success)">${totalHoursNum().toFixed(1)}h</span>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════
+// EXCEL REPORTS
+// ═══════════════════════════════════════════════
+function downloadReport(type) {
+  const today = new Date();
+  let filtered = [];
+  let sheetName = '';
+
+  if (type === 'day') {
+    const t = todayStr();
+    filtered = entries.filter(e => e.date === t);
+    sheetName = 'Day_' + t;
+  } else if (type === 'week') {
+    const start = new Date(today);
+    start.setDate(today.getDate() - today.getDay());
+    filtered = entries.filter(e => {
+      const d = new Date(e.date + 'T00:00:00');
+      return d >= start && d <= today;
+    });
+    sheetName = 'Week_' + start.toISOString().slice(0,10);
+  } else {
+    filtered = entries.filter(e => e.date && e.date.slice(0,7) === todayStr().slice(0,7));
+    sheetName = 'Month_' + todayStr().slice(0,7);
+  }
+
+  if (!filtered.length) { showToast('⚠️ No entries found for this period'); return; }
+
+  const rows = filtered.map((e, i) => ({
+    '#': i + 1,
+    'Date': e.date,
+    'Vehicle No': e.vehicle,
+    'Model': e.model,
+    'Start Time': e.start,
+    'End Time': e.end,
+    'Total Hours': e.hours,
+    'Remarks': e.remarks || '',
+    'Employee': employee ? employee.name : '',
+    'Employee ID': employee ? employee.id : ''
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, sheetName.slice(0,31));
+
+  // Style column widths
+  ws['!cols'] = [
+    {wch:4},{wch:12},{wch:14},{wch:18},{wch:12},{wch:12},{wch:12},{wch:20},{wch:18},{wch:14}
+  ];
+
+  const fname = `Timesheet_${sheetName}_${employee ? employee.id : 'EMP'}.xlsx`;
+  XLSX.writeFile(wb, fname);
+  showToast('📥 Report downloaded!');
+}
+
+// ═══════════════════════════════════════════════
+// DARK MODE
+// ═══════════════════════════════════════════════
+function toggleDark() {
+  darkMode = !darkMode;
+  document.body.classList.toggle('dark', darkMode);
+  localStorage.setItem('ts_dark', darkMode ? '1' : '0');
+  updateDarkBtn();
+  document.getElementById('dmBtn').textContent = darkMode ? '☀️ Disable' : '🌙 Enable';
+}
+
+function updateDarkBtn() {
+  document.getElementById('darkBtn').textContent = darkMode ? '☀️' : '🌙';
+}
+
+// ═══════════════════════════════════════════════
+// MODALS
+// ═══════════════════════════════════════════════
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function confirmReset() { openModal('resetModal'); }
+function doReset() {
+  localStorage.clear();
+  closeModal('resetModal');
+  setTimeout(() => location.reload(), 200);
+}
+
+// Close modal on backdrop click
+document.querySelectorAll('.modal-backdrop').forEach(b => {
+  b.addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+});
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+// ═══════════════════════════════════════════════
+// KEYBOARD: Enter on reg fields
+// ═══════════════════════════════════════════════
+document.getElementById('regId').addEventListener('keydown', e => {
+  if (e.key === 'Enter') registerEmployee();
+});
+document.getElementById('regName').addEventListener('keydown', e => {
+  if (e.key === 'Enter') document.getElementById('regId').focus();
+});
+
+// ═══════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════
+init();
+</script>
+</body>
+</html>
